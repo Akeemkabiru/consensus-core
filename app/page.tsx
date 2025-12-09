@@ -131,7 +131,7 @@ export default function Home() {
               <p className="font-semibold text-2xl sm:text-3xl tracking-tight">
                 Consensus Core
               </p>
-              <p className="text-sm text-white/60 hidden md:block">
+              <p className="text-sm text-white/60">
                 Remove gaps and extract consensus core regions
               </p>
             </div>
