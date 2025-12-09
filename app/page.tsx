@@ -3,11 +3,17 @@
 import { useRef, useState } from "react";
 import { FaCut, FaUpload } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
+import axios from "axios";
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 👇 NEW STATES
+  const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null);
+  const [downloadName, setDownloadName] = useState<string>("");
 
   const allowedExtensions = [
     "fa",
@@ -46,19 +52,70 @@ export default function Home() {
   const validateAndSet = (fileList: FileList) => {
     const validFiles: File[] = [];
     for (const file of fileList) {
-      if (isValidFile(file)) {
-        validFiles.push(file);
-      } else {
-        showError(`Invalid file: ${file.name}`);
-      }
+      if (isValidFile(file)) validFiles.push(file);
+      else showError(`Invalid file: ${file.name}`);
     }
     if (validFiles.length > 0) {
       setFiles(validFiles);
+      setDownloadBlob(null); // reset download state when new files selected
     }
   };
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const clearAll = () => {
+    setFiles([]);
+    setDownloadBlob(null);
+    setDownloadName("");
+  };
+
+  async function handleUpload() {
+    try {
+      setIsLoading(true);
+      setDownloadBlob(null);
+
+      const formData = new FormData();
+      for (const file of files) formData.append("files", file);
+
+      const response = await axios.post(
+        "https://prot-seq-consesus.onrender.com/upload",
+        formData,
+        {
+          responseType: "blob",
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      let filename = "download";
+      const header = response.headers["content-disposition"];
+      if (header) {
+        const match = header.match(/filename="?(.+)"?/);
+        if (match) filename = match[1];
+      } else {
+        filename = files.length === 1 ? files[0].name : "results.zip";
+      }
+
+      setDownloadBlob(new Blob([response.data]));
+      setDownloadName(filename);
+    } catch (error) {
+      console.error("Upload error:", error);
+      showError("Upload failed! Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const triggerDownload = () => {
+    if (!downloadBlob) return;
+
+    const url = window.URL.createObjectURL(downloadBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = downloadName;
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   return (
@@ -74,7 +131,7 @@ export default function Home() {
               <p className="font-semibold text-2xl sm:text-3xl tracking-tight">
                 Consensus Core
               </p>
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-white/60 hidden md:block">
                 Remove gaps and extract consensus core regions
               </p>
             </div>
@@ -83,6 +140,7 @@ export default function Home() {
 
         <section className="flex justify-center py-8 sm:py-10">
           <div className="w-full max-w-7xl px-4 sm:px-6 flex flex-col lg:flex-row gap-10 lg:gap-12">
+            {/* LEFT SIDE */}
             <div className="w-full lg:w-[55%]">
               <p className="text-lg font-semibold mb-4 tracking-wide">
                 Input Files
@@ -104,8 +162,8 @@ export default function Home() {
                   type="file"
                   hidden
                   multiple
-                  accept=".fa,.fasta,.clustal,.clu,.phy,.phylip,.sto,.stockholm"
                   ref={fileInputRef}
+                  accept=".fa,.fasta,.clustal,.clu,.phy,.phylip,.sto,.stockholm"
                   onChange={handleFileChange}
                 />
 
@@ -145,70 +203,66 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
+
+                  <button
+                    onClick={clearAll}
+                    className="mt-4 w-full py-2 rounded-xl bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition"
+                  >
+                    Clear All
+                  </button>
                 </div>
               )}
             </div>
 
-            <div className="w-full lg:w-[45%] bg-[#14181F] p-6 sm:p-8 rounded-2xl border border-white/10 shadow-lg">
+            {/* RIGHT SIDE */}
+            <div className="w-full lg:w-[45%] h-fit bg-[#14181F] p-6 sm:p-8 rounded-2xl border border-white/10 shadow-lg">
               <p className="text-lg font-semibold mb-6 tracking-wide">
                 Parameters
               </p>
 
+              {/* Dummy sliders remain unchanged */}
               <div className="mb-8">
                 <div className="flex justify-between text-sm mb-1">
                   <p>Gap proportion threshold</p>
                   <p className="text-white/70">45%</p>
                 </div>
-
                 <input
                   type="range"
                   min={0}
                   max={100}
                   className="w-full accent-white h-2 rounded-lg bg-[#1C2129]"
                 />
-
                 <div className="flex justify-between text-xs text-white/40 mt-1">
                   <p>Strict (0)</p>
                   <p>Permissive</p>
                 </div>
               </div>
 
-              <div className="mb-8">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="accent-white" />
-                  <span className="text-sm">Remove full-gap columns</span>
-                </label>
-              </div>
-
-              <div className="mb-8">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="accent-white" />
-                  <span className="text-sm">Trim flanking regions</span>
-                </label>
-              </div>
-
-              <div className="mb-10">
-                <div className="flex justify-between text-sm mb-1">
-                  <p>Flanking threshold</p>
-                  <p className="text-white/70">45%</p>
-                </div>
-
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  className="w-full accent-white h-2 rounded-lg bg-[#1C2129]"
-                />
-              </div>
-
-              <button className="w-full py-3 rounded-xl bg-white text-black font-semibold shadow-xl hover:bg-white/90 active:scale-[0.98] transition">
-                Process {files.length} {files.length === 1 ? "file" : "files"}
+              {/* SUBMIT / DOWNLOAD BUTTON */}
+              <button
+                disabled={isLoading || files.length === 0}
+                onClick={downloadBlob ? triggerDownload : handleUpload}
+                className={`w-full py-3 rounded-xl font-semibold shadow-xl transition
+                  ${
+                    downloadBlob
+                      ? "bg-green-400 text-black hover:bg-green-300"
+                      : isLoading
+                      ? "bg-white/40 text-black cursor-not-allowed"
+                      : "bg-white text-black hover:bg-white/90"
+                  }`}
+              >
+                {downloadBlob
+                  ? "Download Result"
+                  : isLoading
+                  ? "Processing…"
+                  : `Process ${files.length} ${
+                      files.length === 1 ? "file" : "files"
+                    }`}
               </button>
             </div>
           </div>
         </section>
 
-        {/* FOOTER */}
         <footer className="w-full border-t border-white/10 py-4 flex justify-center px-4">
           <p className="text-xs text-white/40 text-center">
             Processes FASTA, CLUSTAL, PHYLIP, and Stockholm formats. All
