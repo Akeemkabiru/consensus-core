@@ -1,4 +1,4 @@
-import { FaCut } from "react-icons/fa";
+import { FaCut, FaUpload } from "react-icons/fa";
 
 export default function Home() {
   return (
@@ -21,10 +21,13 @@ export default function Home() {
           <div className="w-7xl flex justify-between py-8">
             <div>
               <p>INPUT FILES</p>
-              <div>
-                <input type="file" />
+              <div className="flex flex-col items-center justify-center border border-dashed p-6 rounded-lg border-gray-500/90">
+                <input type="file" hidden />
+                <FaUpload />
                 <p>Drop MSA files here or click to browse</p>
-                <p>Supports FASTA, CLUSTAL, PHYLIP, Stockholm formarts</p>
+                <p className="text-sm">
+                  Supports FASTA, CLUSTAL, PHYLIP, Stockholm formarts
+                </p>
               </div>
             </div>
 
