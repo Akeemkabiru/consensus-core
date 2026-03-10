@@ -10,14 +10,14 @@ export default function Home() {
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // 👇 NEW STATES
   const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null);
   const [downloadName, setDownloadName] = useState<string>("");
 
   const allowedExtensions = [
     "fa",
+    "fas",
     "fasta",
+    "mas",
     "clustal",
     "clu",
     "phy",
@@ -38,12 +38,12 @@ export default function Home() {
 
   const handleBrowse = () => fileInputRef.current?.click();
 
-  const handleFileChange = (e: any) => {
+  const handleFileChange = (e) => {
     if (!e.target.files) return;
     validateAndSet(e.target.files);
   };
 
-  const handleDrop = (e: any) => {
+  const handleDrop = (e) => {
     e.preventDefault();
     if (!e.dataTransfer.files) return;
     validateAndSet(e.dataTransfer.files);
@@ -57,7 +57,7 @@ export default function Home() {
     }
     if (validFiles.length > 0) {
       setFiles(validFiles);
-      setDownloadBlob(null); // reset download state when new files selected
+      setDownloadBlob(null);
     }
   };
 
@@ -85,7 +85,7 @@ export default function Home() {
         {
           responseType: "blob",
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
 
       let filename = "download";
@@ -121,7 +121,6 @@ export default function Home() {
   return (
     <div className="bg-[#0B0D10] min-h-screen text-[#F6F6F7] font-sans">
       <main className="w-full flex flex-col">
-        {/* HEADER */}
         <header className="w-full border-b border-white/10 bg-[#101317]/70 backdrop-blur-md py-5 flex justify-center">
           <div className="w-full max-w-7xl flex items-center gap-4 px-4 sm:px-6">
             <div className="bg-[#181C22] p-2 rounded-xl shadow-lg border border-white/10">
@@ -140,7 +139,6 @@ export default function Home() {
 
         <section className="flex justify-center py-8 sm:py-10">
           <div className="w-full max-w-7xl px-4 sm:px-6 flex flex-col lg:flex-row gap-10 lg:gap-12">
-            {/* LEFT SIDE */}
             <div className="w-full lg:w-[55%]">
               <p className="text-lg font-semibold mb-4 tracking-wide">
                 Input Files
@@ -163,7 +161,7 @@ export default function Home() {
                   hidden
                   multiple
                   ref={fileInputRef}
-                  accept=".fa,.fasta,.clustal,.clu,.phy,.phylip,.sto,.stockholm"
+                  accept=".fa,.fas,.fasta,.mas,.clustal,.clu,.phy,.phylip,.sto,.stockholm"
                   onChange={handleFileChange}
                 />
 
@@ -175,7 +173,8 @@ export default function Home() {
                     Drop MSA files here or click to browse
                   </p>
                   <p className="text-xs text-white/50 text-center">
-                    Supports FASTA, CLUSTAL, PHYLIP, Stockholm formats
+                    Supports FASTA (.fa, .fas, .fasta, .mas), CLUSTAL, PHYLIP,
+                    Stockholm formats
                   </p>
                 </div>
               </div>
@@ -214,13 +213,11 @@ export default function Home() {
               )}
             </div>
 
-            {/* RIGHT SIDE */}
             <div className="w-full lg:w-[45%] h-fit bg-[#14181F] p-6 sm:p-8 rounded-2xl border border-white/10 shadow-lg">
               <p className="text-lg font-semibold mb-6 tracking-wide">
                 Parameters
               </p>
 
-              {/* Dummy sliders remain unchanged */}
               <div className="mb-8">
                 <div className="flex justify-between text-sm mb-1">
                   <p>Gap proportion threshold</p>
@@ -238,7 +235,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* SUBMIT / DOWNLOAD BUTTON */}
               <button
                 disabled={isLoading || files.length === 0}
                 onClick={downloadBlob ? triggerDownload : handleUpload}
@@ -247,17 +243,17 @@ export default function Home() {
                     downloadBlob
                       ? "bg-green-400 text-black hover:bg-green-300"
                       : isLoading
-                      ? "bg-white/40 text-black cursor-not-allowed"
-                      : "bg-white text-black hover:bg-white/90"
+                        ? "bg-white/40 text-black cursor-not-allowed"
+                        : "bg-white text-black hover:bg-white/90"
                   }`}
               >
                 {downloadBlob
                   ? "Download Result"
                   : isLoading
-                  ? "Processing…"
-                  : `Process ${files.length} ${
-                      files.length === 1 ? "file" : "files"
-                    }`}
+                    ? "Processing…"
+                    : `Process ${files.length} ${
+                        files.length === 1 ? "file" : "files"
+                      }`}
               </button>
             </div>
           </div>
@@ -265,8 +261,8 @@ export default function Home() {
 
         <footer className="w-full border-t border-white/10 py-4 flex justify-center px-4">
           <p className="text-xs text-white/40 text-center">
-            Processes FASTA, CLUSTAL, PHYLIP, and Stockholm formats. All
-            processing runs locally in your browser.
+            Processes FASTA (.fa, .fas, .fasta, .mas), CLUSTAL, PHYLIP, and
+            Stockholm formats.
           </p>
         </footer>
       </main>
