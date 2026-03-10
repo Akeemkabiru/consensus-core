@@ -38,12 +38,12 @@ export default function Home() {
 
   const handleBrowse = () => fileInputRef.current?.click();
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     validateAndSet(e.target.files);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!e.dataTransfer.files) return;
     validateAndSet(e.dataTransfer.files);
@@ -80,16 +80,17 @@ export default function Home() {
       for (const file of files) formData.append("files", file);
 
       const response = await axios.post(
-        "https://prot-seq-consesus.onrender.com/upload",
+        "https://prot-seq-consesus.onrender.com/upload/",
         formData,
         {
           responseType: "blob",
           headers: { "Content-Type": "multipart/form-data" },
-        },
+        }
       );
 
       let filename = "download";
       const header = response.headers["content-disposition"];
+
       if (header) {
         const match = header.match(/filename="?(.+)"?/);
         if (match) filename = match[1];
@@ -173,8 +174,7 @@ export default function Home() {
                     Drop MSA files here or click to browse
                   </p>
                   <p className="text-xs text-white/50 text-center">
-                    Supports FASTA (.fa, .fas, .fasta, .mas), CLUSTAL, PHYLIP,
-                    Stockholm formats
+                    Supports FASTA (.fa, .fas, .fasta, .mas), CLUSTAL, PHYLIP, Stockholm formats
                   </p>
                 </div>
               </div>
@@ -189,9 +189,7 @@ export default function Home() {
                         key={i}
                         className="group bg-[#1A1F27] p-3 rounded-xl border border-white/10 shadow-sm flex justify-between items-center transition hover:bg-[#232932]"
                       >
-                        <span className="truncate max-w-[80%]">
-                          {file.name}
-                        </span>
+                        <span className="truncate max-w-[80%]">{file.name}</span>
 
                         <button
                           onClick={() => removeFile(i)}
@@ -218,53 +216,29 @@ export default function Home() {
                 Parameters
               </p>
 
-              <div className="mb-8">
-                <div className="flex justify-between text-sm mb-1">
-                  <p>Gap proportion threshold</p>
-                  <p className="text-white/70">45%</p>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  className="w-full accent-white h-2 rounded-lg bg-[#1C2129]"
-                />
-                <div className="flex justify-between text-xs text-white/40 mt-1">
-                  <p>Strict (0)</p>
-                  <p>Permissive</p>
-                </div>
-              </div>
-
               <button
                 disabled={isLoading || files.length === 0}
                 onClick={downloadBlob ? triggerDownload : handleUpload}
                 className={`w-full py-3 rounded-xl font-semibold shadow-xl transition
-                  ${
-                    downloadBlob
-                      ? "bg-green-400 text-black hover:bg-green-300"
-                      : isLoading
-                        ? "bg-white/40 text-black cursor-not-allowed"
-                        : "bg-white text-black hover:bg-white/90"
-                  }`}
+                ${
+                  downloadBlob
+                    ? "bg-green-400 text-black hover:bg-green-300"
+                    : isLoading
+                    ? "bg-white/40 text-black cursor-not-allowed"
+                    : "bg-white text-black hover:bg-white/90"
+                }`}
               >
                 {downloadBlob
                   ? "Download Result"
                   : isLoading
-                    ? "Processing…"
-                    : `Process ${files.length} ${
-                        files.length === 1 ? "file" : "files"
-                      }`}
+                  ? "Processing…"
+                  : `Process ${files.length} ${
+                      files.length === 1 ? "file" : "files"
+                    }`}
               </button>
             </div>
           </div>
         </section>
-
-        <footer className="w-full border-t border-white/10 py-4 flex justify-center px-4">
-          <p className="text-xs text-white/40 text-center">
-            Processes FASTA (.fa, .fas, .fasta, .mas), CLUSTAL, PHYLIP, and
-            Stockholm formats.
-          </p>
-        </footer>
       </main>
     </div>
   );
